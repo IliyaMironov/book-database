@@ -15,12 +15,29 @@ template <BookContainerLike BookContainer = std::vector<Book>>
 class BookDatabase {
 public:
     // Type aliases
+    using container_type  = BookContainer;
+    using value_type      = Book;
+    using reference       = value_type&;
+    using const_reference = const value_type&;
+
+    using iterator       = typename container_type::iterator;
+    using const_iterator = typename container_type::const_iterator;
+    using size_type      = typename container_type::size_type;
+
+    using AuthorContainer =
+        std::set<std::string, TransparentStringLess>;
 
     // Ваш код здесь
 
     using AuthorContainer = BookContainer /* Ваш код здесь */;
 
     BookDatabase() = default;
+
+    BookDatabase(std::initializer_list<Book> init) {
+        for (const auto& book : init) {
+            PushBack(book);
+        }
+    }
 
     void Clear() {
         books_.clear();
@@ -29,7 +46,34 @@ public:
 
     // Standard container interface methods
 
-    // Ваш код здесь
+    // Iterators
+    iterator begin() noexcept { return books_.begin(); }
+    iterator end()   noexcept { return books_.end(); }
+
+    const_iterator begin() const noexcept { return books_.begin(); }
+    const_iterator end()   const noexcept { return books_.end(); }
+
+    const_iterator cbegin() const noexcept { return books_.cbegin(); }
+    const_iterator cend()   const noexcept { return books_.cend(); }
+ 
+    // Modifiers
+    void PushBack(const Book& book) {
+        books_.push_back(book);
+        authors_.emplace(book.author);
+    }
+
+    void PushBack(Book&& book) {
+        authors_.emplace(book.author);
+        books_.push_back(std::move(book));
+    }
+
+    template <typename... Args>
+    reference EmplaceBack(Args&&... args) {
+        auto& ref = books_.emplace_back(std::forward<Args>(args)...);
+        authors_.emplace(ref.author);
+        return ref;
+    }
+
 
 private:
     BookContainer books_;
