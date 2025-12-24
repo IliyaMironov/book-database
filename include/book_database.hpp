@@ -4,6 +4,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <set>
 
 #include "book.hpp"
 #include "concepts.hpp"
@@ -14,7 +15,6 @@ namespace bookdb {
 template <BookContainerLike BookContainer = std::vector<Book>>
 class BookDatabase {
 public:
-    // Type aliases
     using container_type  = BookContainer;
     using value_type      = Book;
     using reference       = value_type&;
@@ -26,10 +26,6 @@ public:
 
     using AuthorContainer =
         std::set<std::string, TransparentStringLess>;
-
-    // Ваш код здесь
-
-    using AuthorContainer = BookContainer /* Ваш код здесь */;
 
     BookDatabase() = default;
 
@@ -44,9 +40,14 @@ public:
         authors_.clear();
     }
 
-    // Standard container interface methods
+    bool empty() const noexcept {
+        return books_.empty();
+    }
 
-    // Iterators
+    size_type size() const noexcept {
+        return books_.size();
+    }
+
     iterator begin() noexcept { return books_.begin(); }
     iterator end()   noexcept { return books_.end(); }
 
@@ -56,7 +57,6 @@ public:
     const_iterator cbegin() const noexcept { return books_.cbegin(); }
     const_iterator cend()   const noexcept { return books_.cend(); }
  
-    // Modifiers
     void PushBack(const Book& book) {
         books_.push_back(book);
         authors_.emplace(book.author);
@@ -74,6 +74,14 @@ public:
         return ref;
     }
 
+    const container_type& GetBooks() const noexcept {
+        return books_;
+    }
+
+    const AuthorContainer& GetAuthors() const noexcept {
+        return authors_;
+    }
+
 
 private:
     BookContainer books_;
@@ -87,10 +95,6 @@ template <>
 struct formatter<bookdb::BookDatabase<std::vector<bookdb::Book>>> {
     template <typename FormatContext>
     auto format(const bookdb::BookDatabase<std::vector<bookdb::Book>> &db, FormatContext &fc) const {
-        /*
-        Раскомментируйте, когда bookdb::BookDatabase поддержит интерфейсы, доступные стандартным контейнерам
-        (size/begin/...)
-
         format_to(fc.out(), "BookDatabase (size = {}): ", db.size());
 
         format_to(fc.out(), "Books:\n");
@@ -102,7 +106,6 @@ struct formatter<bookdb::BookDatabase<std::vector<bookdb::Book>>> {
         for (const auto &author : db.GetAuthors()) {
             format_to(fc.out(), "- {}\n", author);
         }
-        */
         return fc.out();
     }
 

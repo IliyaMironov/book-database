@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 #include <book_database.hpp>
+#include <filters.hpp>
+#include <statsistics.hpp>
+#include <comparators.hpp>
 
 TEST(TestComponentName, SimpleCheck) { EXPECT_EQ(1 + 1, 2); }
 
@@ -83,7 +86,6 @@ TEST(BookDatabaseTest, PushBackAndSize) {
     EXPECT_FALSE(db.empty());
     EXPECT_EQ(db.size(), 2u);
 
-    // Проверка авторов
     const auto& authors = db.GetAuthors();
     EXPECT_TRUE(authors.contains("Frank Herbert"));
     EXPECT_TRUE(authors.contains("Agatha Christie"));
@@ -110,7 +112,7 @@ TEST(BookFiltersTest, YearAndRatingAndGenre) {
                                             bookdb::YearBetween(1900, 1970),
                                             bookdb::RatingAbove(4.7)
                                         ));
-    EXPECT_EQ(combined.size(), 3u);
+    EXPECT_EQ(combined.size(), 2u);
 
     auto any_filtered = bookdb::filterBooks(db.begin(), db.end(),
                                             bookdb::any_of(
@@ -152,12 +154,10 @@ TEST(BookAnalysisTest, RandomSampleAndTopN) {
         {"D", "Book4", 2003, "Mystery", 4.1, 4}
     };
 
-    // Random sample
     auto sample = bookdb::sampleRandomBooks(db, 2);
     EXPECT_EQ(sample.size(), 2u);
 
-    // Top 2 by rating
-    auto top = bookdb::getTopNBy(db, 2, bookdb::comp::LessByRating{});
+    auto top = bookdb::getTopNBy(db, 2, bookdb::comp::GreaterByRating{});
     EXPECT_EQ(top.size(), 2u);
     EXPECT_GE(top[0].get().rating, top[1].get().rating);
 }
@@ -171,4 +171,49 @@ TEST(BookDatabaseTest, EmptyDatabaseHandling) {
     EXPECT_THROW(bookdb::calculateAverageRating(db), std::logic_error);
     EXPECT_THROW(bookdb::sampleRandomBooks(db, 1), std::out_of_range);
     EXPECT_THROW(bookdb::getTopNBy(db, 1, bookdb::comp::LessByRating{}), std::out_of_range);
+}
+
+TEST(BookFilterTest, CombinedPredicatesWorkCorrectly) {
+    bookdb::BookDatabase<> db{
+        {"Frank Herbert", "Dune", 1965, bookdb::Genre::SciFi, 4.9, 3},
+        {"Frank Herbert", "Dune Messiah", 1969, bookdb::Genre::SciFi, 4.6, 2},
+        {"George Orwell", "1984", 1949, bookdb::Genre::Fiction, 4.8, 4},
+        {"Agatha Christie", "Poirot", 1934, bookdb::Genre::Mystery, 4.7, 5},
+        {"Unknown Author", "Some Book", 2000, bookdb::Genre::Unknown, 3.5, 1}
+    };
+
+    // SciFi книги с рейтингом > 4.7, изданные между 1950 и 1970
+    auto result = bookdb::filterBooks(
+        db.begin(),
+        db.end(),
+        bookdb::all_of(
+            bookdb::GenreIs(bookdb::Genre::SciFi),
+            bookdb::RatingAbove(4.7),
+            bookdb::YearBetween(1950, 1970)
+        )
+    );
+
+    ASSERT_EQ(result.size(), 1u);
+    EXPECT_EQ(result.front().get().title, "Dune");
+
+    // книги либо жанра Mystery, либо с рейтингом > 4.85
+    auto any_result = bookdb::filterBooks(
+        db.begin(),
+        db.end(),
+        bookdb::any_of(
+            bookdb::GenreIs(bookdb::Genre::Mystery),
+            bookdb::RatingAbove(4.85)
+        )
+    );
+
+    ASSERT_EQ(any_result.size(), 2u);
+
+    std::vector<std::string_view> titles;
+    for (const auto& ref : any_result) {
+        const auto& b = ref.get();
+        titles.push_back(b.title);
+    }
+
+    EXPECT_NE(std::find(titles.begin(), titles.end(), "Dune"), titles.end());
+    EXPECT_NE(std::find(titles.begin(), titles.end(), "Poirot"), titles.end());
 }

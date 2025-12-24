@@ -6,7 +6,6 @@
 
 namespace bookdb {
 
-// Прозрачное лексикографическое сравнение строк
 struct TransparentStringLess {
     using is_transparent = void;
 
@@ -16,7 +15,6 @@ struct TransparentStringLess {
     }
 };
 
-// Прозрачная проверка эквивалентности строк
 struct TransparentStringEqual {
     using is_transparent = void;
 
@@ -26,7 +24,6 @@ struct TransparentStringEqual {
     }
 };
 
-// Прозрачный хэш строк
 struct TransparentStringHash {
     using is_transparent = void;
 

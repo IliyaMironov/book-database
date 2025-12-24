@@ -8,15 +8,7 @@ namespace bookdb {
 
 enum class Genre { Fiction, NonFiction, SciFi, Biography, Mystery, Unknown };
 
-// Ваш код для constexpr преобразования строк в enum::Genre и наоборот здесь
-
-constexpr Genre GenreFromString(std::string_view s) {
-    // Ваш код здесь
-    return Genre::Unknown;
-}
-
 struct Book {
-    // string_view для экономии памяти, чтобы ссылаться на оригинальную строку, хранящуюся в другом контейнере
     std::string_view author;
     std::string title;
 
@@ -50,7 +42,7 @@ struct Book {
                 rating_,
                 read_count_) {}
 
-    constexpr Genre genre_from_string(std::string_view sv) {
+    constexpr static Genre genre_from_string(std::string_view sv) {
         using bookdb::Genre;
         if (sv == "Fiction") {
             return Genre::Fiction;
@@ -69,6 +61,38 @@ struct Book {
         }
         
         return Genre::Unknown;
+    }
+
+    inline auto YearBetween(int from, int to) {
+        return [from, to](const Book& b) {
+            return b.year >= from && b.year <= to;
+        };
+    }
+
+    inline auto RatingAbove(double min_rating) {
+        return [min_rating](const Book& b) {
+            return b.rating > min_rating;
+        };
+    }
+
+    inline auto GenreIs(Genre genre) {
+        return [genre](const Book& b) {
+            return b.genre == genre;
+        };
+    }
+
+    template <typename... Preds>
+    auto all_of(Preds... preds) {
+        return [=](const Book& b) {
+            return (preds(b) && ...);
+        };
+    }
+
+    template <typename... Preds>
+    auto any_of(Preds... preds) {
+        return [=](const Book& b) {
+            return (preds(b) || ...);
+        };
     }
 };
 }  // namespace bookdb
@@ -97,10 +121,8 @@ struct formatter<bookdb::Genre, char> {
     }
 
     constexpr auto parse(format_parse_context &ctx) {
-        return ctx.begin();  // Просто игнорируем пользовательский формат
+        return ctx.begin();
     }
 };
-
-// Ваш код для std::formatter<Book> здесь
 
 }  // namespace std
