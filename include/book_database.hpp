@@ -32,7 +32,9 @@ public:
 
     BookDatabase(std::initializer_list<Book> init) {
         for (const auto& book : init) {
-            PushBack(book);
+            // Аналогично PushBack
+            auto [it, _] = authors_.emplace(book.author);
+            books_.emplace_back(Book{std::string_view(*it), book.title, book.year, book.genre, book.rating, book.read_count});
         }
     }
 
@@ -59,20 +61,21 @@ public:
     const_iterator cend()   const noexcept { return books_.cend(); }
  
     void PushBack(const Book& book) {
-        books_.push_back(book);
-        authors_.emplace(book.author);
+        auto [it, _] = authors_.emplace(book.author);
+        books_.emplace_back(Book{std::string_view(*it), book.title, book.year, book.genre, book.rating, book.read_count});
     }
 
     void PushBack(Book&& book) {
-        authors_.emplace(book.author);
-        books_.push_back(std::move(book));
+        auto [it, _] = authors_.emplace(book.author);
+        books_.emplace_back(Book{std::string_view(*it), std::move(book.title), book.year, book.genre, book.rating, book.read_count});
     }
 
     template <typename... Args>
     reference EmplaceBack(Args&&... args) {
-        auto& ref = books_.emplace_back(std::forward<Args>(args)...);
-        authors_.emplace(ref.author);
-        return ref;
+        Book temp_book(std::forward<Args>(args)...);
+        auto [it, _] = authors_.emplace(temp_book.author);
+        books_.emplace_back(Book{std::string_view(*it), std::move(temp_book.title), temp_book.year, temp_book.genre, temp_book.rating, temp_book.read_count});
+        return books_.back();
     }
 
     const container_type& GetBooks() const noexcept {
