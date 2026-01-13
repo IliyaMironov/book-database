@@ -131,9 +131,13 @@ TEST(BookAnalysisTest, AuthorHistogramAndAverageRating) {
 
     auto hist = bookdb::buildAuthorHistogramFlat(db);
     EXPECT_EQ(hist.size(), 2u);
-    EXPECT_EQ(hist[0].first, "Agatha Christie");
-    EXPECT_EQ(hist[1].first, "Frank Herbert");
-    EXPECT_EQ(hist[1].second, 2u);
+
+    auto it = hist.begin();
+    EXPECT_EQ(it->first, "Agatha Christie");
+    EXPECT_EQ(it->second, 1u);
+    ++it;
+    EXPECT_EQ(it->first, "Frank Herbert");
+    EXPECT_EQ(it->second, 2u);
 
     double avg = bookdb::calculateAverageRating(db);
     EXPECT_NEAR(avg, (4.9 + 4.6 + 4.7) / 3.0, 1e-6);

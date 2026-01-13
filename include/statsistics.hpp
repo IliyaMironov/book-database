@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <flat_map>
 #include <iterator>
 #include <random>
 #include <stdexcept>
@@ -14,32 +15,15 @@ namespace bookdb {
 
 template <BookContainerLike T, typename Comparator = TransparentStringLess>
 auto buildAuthorHistogramFlat(const BookDatabase<T>& db, Comparator comp = {}) {
-    using result_type = std::vector<std::pair<std::string_view, std::size_t>>;
+    using result_type = std::flat_map<std::string_view, std::size_t, Comparator>;
 
-    result_type result;
+    result_type result(comp);
 
     for (const auto& book : db) {
-        result.emplace_back(book.author, 1);
+        auto [it, inserted] = result.try_emplace(book.author, 0);
+        ++it->second;
     }
 
-    std::ranges::sort(result, [&](auto& a, auto& b) {
-        return comp(a.first, b.first);
-    });
-
-    auto out = result.begin();
-    for (auto it = result.begin(); it != result.end(); ) {
-        std::string_view author = it->first;
-        std::size_t count = 0;
-
-        while (it != result.end() && !comp(author, it->first) && !comp(it->first, author)) {
-            count += it->second;
-            ++it;
-        }
-
-        *out++ = {author, count};
-    }
-
-    result.erase(out, result.end());
     return result;
 }
 
