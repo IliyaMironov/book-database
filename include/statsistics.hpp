@@ -3,7 +3,9 @@
 #include <algorithm>
 #include <flat_map>
 #include <iterator>
+#include <numeric>
 #include <random>
+#include <ranges>
 #include <stdexcept>
 #include <string_view>
 
@@ -28,29 +30,20 @@ auto buildAuthorHistogramFlat(const BookDatabase<T>& db, Comparator comp = {}) {
 }
 
 auto calculateGenreRatings(const auto& db) {
-    using entry = std::pair<Genre, double>;
-    std::vector<entry> flat;
+    using rating_data = std::pair<double, std::size_t>; // sum, count
+    std::flat_map<Genre, rating_data> genre_stats;
 
     for (const auto& book : db) {
-        flat.emplace_back(book.genre, book.rating);
+        auto [it, inserted] = genre_stats.try_emplace(book.genre, rating_data{0.0, 0});
+        it->second.first += book.rating;
+        ++it->second.second;
     }
 
-    std::ranges::sort(flat, {}, &entry::first);
-
     std::vector<std::pair<Genre, double>> result;
+    result.reserve(genre_stats.size());
 
-    for (auto it = flat.begin(); it != flat.end(); ) {
-        Genre g = it->first;
-        double sum = 0.0;
-        std::size_t count = 0;
-
-        while (it != flat.end() && it->first == g) {
-            sum += it->second;
-            ++count;
-            ++it;
-        }
-
-        result.emplace_back(g, sum / count);
+    for (const auto& [genre, stats] : genre_stats) {
+        result.emplace_back(genre, stats.first / stats.second);
     }
 
     return result;
@@ -61,10 +54,12 @@ double calculateAverageRating(const auto& db) {
         throw std::logic_error("Empty database");
     }
 
-    double sum = std::accumulate(
-        db.begin(), db.end(), 0.0,
-        [](double acc, const Book& b) {
-            return acc + b.rating;
+    double sum = std::transform_reduce(
+        db.begin(), db.end(),
+        0.0,
+        std::plus{},
+        [](const Book& b) {
+            return b.rating;
         }
     );
 
@@ -78,19 +73,18 @@ auto sampleRandomBooks(const BookDatabase<T>& db, std::size_t count) {
         throw std::out_of_range("Sample size exceeds database size");
     }
 
+    std::vector<std::reference_wrapper<const Book>> all_books;
+    all_books.reserve(db.size());
+
+    for (const auto& book : db) {
+        all_books.emplace_back(book);
+    }
+
     std::vector<std::reference_wrapper<const Book>> result;
     result.reserve(count);
 
-    std::vector<std::size_t> indices(db.size());
-    std::iota(indices.begin(), indices.end(), 0);
-
     std::mt19937 gen{std::random_device{}()};
-    std::ranges::shuffle(indices, gen);
-
-    auto it = db.begin();
-    for (std::size_t i = 0; i < count; ++i) {
-        result.emplace_back(*(std::next(it, indices[i])));
-    }
+    std::ranges::sample(all_books, std::back_inserter(result), count, gen);
 
     return result;
 }
