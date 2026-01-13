@@ -150,7 +150,7 @@ TEST(BookAnalysisTest, AuthorHistogramAndAverageRating) {
     }
 }
 
-TEST(BookAnalysisTest, RandomSampleAndTopN) {
+TEST(BookAnalysisTest, RandomSample) {
     bookdb::BookDatabase<> db{
         {"A", "Book1", 2000, "Fiction", 4.0, 1},
         {"B", "Book2", 2001, "Fiction", 4.5, 2},
@@ -161,8 +161,38 @@ TEST(BookAnalysisTest, RandomSampleAndTopN) {
     auto sample = bookdb::sampleRandomBooks(db, 2);
     EXPECT_EQ(sample.size(), 2u);
 
+    for (const auto& book_ref : sample) {
+        const auto& book = book_ref.get();
+        bool found = false;
+        for (const auto& original : db) {
+            if (&original == &book) {
+                found = true;
+                break;
+            }
+        }
+        EXPECT_TRUE(found);
+    }
+
+    auto full_sample = bookdb::sampleRandomBooks(db, 4);
+    EXPECT_EQ(full_sample.size(), 4u);
+}
+
+TEST(BookAnalysisTest, TopNByRating) {
+    bookdb::BookDatabase<> db{
+        {"A", "Book1", 2000, "Fiction", 4.0, 1},
+        {"B", "Book2", 2001, "Fiction", 4.5, 2},
+        {"C", "Book3", 2002, "SciFi", 4.8, 3},
+        {"D", "Book4", 2003, "Mystery", 4.1, 4}
+    };
+
     auto top = bookdb::getTopNBy(db, 2, bookdb::comp::GreaterByRating{});
     EXPECT_EQ(top.size(), 2u);
+
+    EXPECT_EQ(top[0].get().title, "Book3");
+    EXPECT_NEAR(top[0].get().rating, 4.8, 1e-6);
+    EXPECT_EQ(top[1].get().title, "Book2");
+    EXPECT_NEAR(top[1].get().rating, 4.5, 1e-6);
+
     EXPECT_GE(top[0].get().rating, top[1].get().rating);
 }
 
