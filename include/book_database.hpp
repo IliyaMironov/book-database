@@ -4,7 +4,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <set>
+#include <unordered_set>
 
 #include "book.hpp"
 #include "concepts.hpp"
@@ -25,7 +25,8 @@ public:
     using size_type      = typename container_type::size_type;
 
     using AuthorContainer =
-        std::set<std::string, TransparentStringLess>;
+        std::unordered_set<std::string, bookdb::TransparentStringHash, bookdb::TransparentStringEqual>;
+
 
     BookDatabase() = default;
 

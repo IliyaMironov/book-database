@@ -62,38 +62,6 @@ struct Book {
         
         return Genre::Unknown;
     }
-
-    inline auto YearBetween(int from, int to) {
-        return [from, to](const Book& b) {
-            return b.year >= from && b.year <= to;
-        };
-    }
-
-    inline auto RatingAbove(double min_rating) {
-        return [min_rating](const Book& b) {
-            return b.rating > min_rating;
-        };
-    }
-
-    inline auto GenreIs(Genre genre) {
-        return [genre](const Book& b) {
-            return b.genre == genre;
-        };
-    }
-
-    template <typename... Preds>
-    auto all_of(Preds... preds) {
-        return [=](const Book& b) {
-            return (preds(b) && ...);
-        };
-    }
-
-    template <typename... Preds>
-    auto any_of(Preds... preds) {
-        return [=](const Book& b) {
-            return (preds(b) || ...);
-        };
-    }
 };
 }  // namespace bookdb
 
