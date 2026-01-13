@@ -8,35 +8,37 @@
 
 namespace bookdb {
 
-inline auto YearBetween(int from, int to) {
+constexpr inline auto YearBetween(int from, int to) {
     return [from, to](const Book& b) {
         return b.year >= from && b.year <= to;
     };
 }
 
-inline auto RatingAbove(double min_rating) {
+constexpr inline auto RatingAbove(double min_rating) {
     return [min_rating](const Book& b) {
         return b.rating > min_rating;
     };
 }
 
-inline auto GenreIs(Genre g) {
+constexpr inline auto GenreIs(Genre g) {
     return [g](const Book& b) {
         return b.genre == g;
     };
 }
 
 template <typename... Preds>
-auto all_of(Preds... preds) {
-    return [=](const Book& b) {
-        return (preds(b) && ...);
+auto all_of(Preds&&... preds) {
+    auto ps = std::make_tuple(std::move(preds)...);
+    return [ps = std::move(ps)](const Book& b) {
+        return std::apply([&b](const auto&... f) { return (f(b) && ...); }, ps);
     };
 }
 
 template <typename... Preds>
-auto any_of(Preds... preds) {
-    return [=](const Book& b) {
-        return (preds(b) || ...);
+auto any_of(Preds&&... preds) {
+    auto ps = std::make_tuple(std::move(preds)...);
+    return [ps = std::move(ps)](const Book& b) {
+        return std::apply([&b](const auto&... f) { return (f(b) || ...); }, ps);
     };
 }
 

@@ -23,7 +23,17 @@ concept BookSentinel =
 template <typename T>
 concept BookContainerLike =
     std::ranges::range<T> &&
-    BookIterator<std::ranges::iterator_t<T>>;
+    BookIterator<std::ranges::iterator_t<T>> &&
+    requires (T c) {
+        typename T::value_type;
+        requires std::same_as<std::remove_cvref_t<typename T::value_type>, Book>;
+        { c.size() } -> std::convertible_to<std::size_t>;
+        { c.begin() };
+        { c.end() };
+        { c.clear() };
+        { c.emplace_back(std::declval<const Book&>()) };
+    };
+
 
 template <typename P>
 concept BookPredicate =
