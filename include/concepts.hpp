@@ -28,7 +28,7 @@ concept BookContainerLike =
         typename T::value_type;
         requires std::same_as<std::remove_cvref_t<typename T::value_type>, Book>;
         { c.size() } -> std::convertible_to<std::size_t>;
-        { c.begin() };
+        { c.begin() } -> std::input_iterator;
         { c.end() };
         { c.clear() };
         { c.emplace_back(std::declval<const Book&>()) };

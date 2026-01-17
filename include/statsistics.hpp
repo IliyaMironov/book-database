@@ -84,7 +84,8 @@ auto sampleRandomBooks(const BookDatabase<T>& db, std::size_t count) {
     result.reserve(count);
 
     std::mt19937 gen{std::random_device{}()};
-    std::ranges::sample(all_books, std::back_inserter(result), count, gen);
+    //std::ranges::sample(all_books, std::back_inserter(result), count, gen);
+    std::sample(db.begin(), db.end(), std::back_inserter(result), count, gen);
 
     return result;
 }

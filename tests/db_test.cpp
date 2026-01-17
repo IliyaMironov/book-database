@@ -150,6 +150,17 @@ TEST(BookAnalysisTest, AuthorHistogramAndAverageRating) {
     }
 }
 
+TEST(BookAnalysisTest, CheckFormatter) {
+    bookdb::BookDatabase<> db{
+        {"A", "Book1", 2000, "Fiction", 4.0, 1},
+        {"B", "Book2", 2001, "Fiction", 4.5, 2},
+        {"C", "Book3", 2002, "SciFi", 4.8, 3},
+        {"D", "Book4", 2003, "Mystery", 4.1, 4}
+    };
+    std::print("Books: {}\n\n", db);
+    EXPECT_EQ(db.size(), 4u);
+}
+
 TEST(BookAnalysisTest, RandomSample) {
     bookdb::BookDatabase<> db{
         {"A", "Book1", 2000, "Fiction", 4.0, 1},

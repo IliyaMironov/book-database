@@ -93,4 +93,24 @@ struct formatter<bookdb::Genre, char> {
     }
 };
 
+template <>
+struct formatter<bookdb::Book> {
+    constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    auto format(const bookdb::Book& book, FormatContext& ctx) const {
+        return format_to(
+            ctx.out(),
+            "{} ({}, {}, rating: {}, read: {})",
+            book.title,
+            book.author,
+            book.year,
+            book.rating,
+            book.read_count
+        );
+    }
+};
+
 }  // namespace std

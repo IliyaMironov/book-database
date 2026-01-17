@@ -34,7 +34,7 @@ public:
         for (const auto& book : init) {
             // Аналогично PushBack
             auto [it, _] = authors_.emplace(book.author);
-            books_.emplace_back(Book{std::string_view(*it), book.title, book.year, book.genre, book.rating, book.read_count});
+            PushBack(Book{std::string_view(*it), book.title, book.year, book.genre, book.rating, book.read_count});
         }
     }
 
@@ -62,19 +62,24 @@ public:
  
     void PushBack(const Book& book) {
         auto [it, _] = authors_.emplace(book.author);
-        books_.emplace_back(Book{std::string_view(*it), book.title, book.year, book.genre, book.rating, book.read_count});
+        Book newBook = book;
+        newBook.author = *it;
+        books_.push_back(std::move(newBook));
     }
 
     void PushBack(Book&& book) {
         auto [it, _] = authors_.emplace(book.author);
-        books_.emplace_back(Book{std::string_view(*it), std::move(book.title), book.year, book.genre, book.rating, book.read_count});
+        book.author = *it;
+        books_.push_back(std::move(book));
     }
 
     template <typename... Args>
     reference EmplaceBack(Args&&... args) {
         Book temp_book(std::forward<Args>(args)...);
         auto [it, _] = authors_.emplace(temp_book.author);
-        books_.emplace_back(Book{std::string_view(*it), std::move(temp_book.title), temp_book.year, temp_book.genre, temp_book.rating, temp_book.read_count});
+        Book newBook = temp_book;
+        newBook.author = *it;
+        books_.push_back(std::move(newBook));
         return books_.back();
     }
 
