@@ -32,7 +32,6 @@ public:
 
     BookDatabase(std::initializer_list<Book> init) {
         for (const auto& book : init) {
-            // Аналогично PushBack
             auto [it, _] = authors_.emplace(book.author);
             PushBack(Book{std::string_view(*it), book.title, book.year, book.genre, book.rating, book.read_count});
         }
