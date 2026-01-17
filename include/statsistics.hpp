@@ -30,13 +30,37 @@ auto buildAuthorHistogramFlat(const BookDatabase<T>& db, Comparator comp = {}) {
 }
 
 auto calculateGenreRatings(const auto& db) {
-    using rating_data = std::pair<double, std::size_t>; // sum, count
+    using rating_data = std::pair<double, std::size_t>;
     std::flat_map<Genre, rating_data> genre_stats;
 
     for (const auto& book : db) {
         auto [it, inserted] = genre_stats.try_emplace(book.genre, rating_data{0.0, 0});
         it->second.first += book.rating;
         ++it->second.second;
+    }
+
+    std::vector<std::pair<Genre, double>> result;
+    result.reserve(genre_stats.size());
+
+    for (const auto& [genre, stats] : genre_stats) {
+        result.emplace_back(genre, stats.first / stats.second);
+    }
+
+    return result;
+}
+
+template <typename It>
+auto calculateGenreRatings(It first, It last) {
+    using rating_data = std::pair<double, std::size_t>;
+    std::flat_map<Genre, rating_data> genre_stats;
+
+    for (auto it = first; it != last; ++it) {
+        const auto& book = *it;
+        auto [pos, inserted] =
+            genre_stats.try_emplace(book.genre, rating_data{0.0, 0});
+
+        pos->second.first += book.rating;
+        ++pos->second.second;
     }
 
     std::vector<std::pair<Genre, double>> result;

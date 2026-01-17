@@ -94,6 +94,53 @@ struct formatter<bookdb::Genre, char> {
 };
 
 template <>
+struct formatter<std::pair<bookdb::Genre, double>, char> {
+    constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    auto format(const std::pair<bookdb::Genre, double>& p,
+                FormatContext& fc) const {
+        return format_to(
+            fc.out(),
+            "{}: {:.2f}",
+            p.first,
+            p.second
+        );
+    }
+};
+
+template <>
+struct formatter<std::vector<std::pair<bookdb::Genre, double>>, char> {
+    constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    auto format(
+        const std::vector<std::pair<bookdb::Genre, double>>& vec,
+        FormatContext& fc
+    ) const {
+        auto out = fc.out();
+
+        out = format_to(out, "[");
+
+        bool first = true;
+        for (const auto& item : vec) {
+            if (!first) {
+                out = format_to(out, ", ");
+            }
+            first = false;
+            out = format_to(out, "{}", item);
+        }
+
+        out = format_to(out, "]");
+        return out;
+    }
+};
+
+template <>
 struct formatter<bookdb::Book> {
     constexpr auto parse(format_parse_context& ctx) {
         return ctx.begin();
