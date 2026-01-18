@@ -30,27 +30,29 @@ auto buildAuthorHistogramFlat(const BookDatabase<T>& db, Comparator comp = {}) {
 }
 
 auto calculateGenreRatings(const auto& db) {
-    using rating_data = std::pair<double, std::size_t>;
-    std::flat_map<Genre, rating_data> genre_stats;
+    // using rating_data = std::pair<double, std::size_t>;
+    // std::flat_map<Genre, rating_data> genre_stats;
 
-    for (const auto& book : db) {
-        auto [it, inserted] = genre_stats.try_emplace(book.genre, rating_data{0.0, 0});
-        it->second.first += book.rating;
-        ++it->second.second;
-    }
+    // for (const auto& book : db) {
+    //     auto [it, inserted] = genre_stats.try_emplace(book.genre, rating_data{0.0, 0});
+    //     it->second.first += book.rating;
+    //     ++it->second.second;
+    // }
 
-    std::vector<std::pair<Genre, double>> result;
-    result.reserve(genre_stats.size());
+    // std::vector<std::pair<Genre, double>> result;
+    // result.reserve(genre_stats.size());
 
-    for (const auto& [genre, stats] : genre_stats) {
-        result.emplace_back(genre, stats.first / stats.second);
-    }
+    // for (const auto& [genre, stats] : genre_stats) {
+    //     result.emplace_back(genre, stats.first / stats.second);
+    // }
 
-    return result;
+    // return result;
+    return calculateGenreRatings(db.begin(), db.end());
 }
 
-template <typename It>
-auto calculateGenreRatings(It first, It last) {
+// template <typepaname It>
+template <BookIterator It, BookSentinel<It> Sent>
+auto calculateGenreRatings(It first, Sent last) {
     using rating_data = std::pair<double, std::size_t>;
     std::flat_map<Genre, rating_data> genre_stats;
 
@@ -63,11 +65,10 @@ auto calculateGenreRatings(It first, It last) {
         ++pos->second.second;
     }
 
-    std::vector<std::pair<Genre, double>> result;
-    result.reserve(genre_stats.size());
+    std::flat_map<Genre, double> result;
 
     for (const auto& [genre, stats] : genre_stats) {
-        result.emplace_back(genre, stats.first / stats.second);
+        result.emplace(genre, stats.first / stats.second);
     }
 
     return result;
@@ -97,12 +98,12 @@ auto sampleRandomBooks(const BookDatabase<T>& db, std::size_t count) {
         throw std::out_of_range("Sample size exceeds database size");
     }
 
-    std::vector<std::reference_wrapper<const Book>> all_books;
-    all_books.reserve(db.size());
+    // std::vector<std::reference_wrapper<const Book>> all_books;
+    // all_books.reserve(db.size());
 
-    for (const auto& book : db) {
-        all_books.emplace_back(book);
-    }
+    // for (const auto& book : db) {
+    //     all_books.emplace_back(book);
+    // }
 
     std::vector<std::reference_wrapper<const Book>> result;
     result.reserve(count);

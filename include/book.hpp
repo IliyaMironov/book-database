@@ -1,8 +1,11 @@
 #pragma once
 
+#include <flat_map>
 #include <format>
 #include <stdexcept>
 #include <string_view>
+
+#include "heterogeneous_lookup.hpp"
 
 namespace bookdb {
 
@@ -133,6 +136,64 @@ struct formatter<std::vector<std::pair<bookdb::Genre, double>>, char> {
             }
             first = false;
             out = format_to(out, "{}", item);
+        }
+
+        out = format_to(out, "]");
+        return out;
+    }
+};
+
+template <>
+struct formatter<std::flat_map<bookdb::Genre, double>, char> {
+    constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    auto format(
+        const std::flat_map<bookdb::Genre, double>& map,
+        FormatContext& fc
+    ) const {
+        auto out = fc.out();
+
+        out = format_to(out, "[");
+
+        bool first = true;
+        for (const auto& [genre, rating] : map) {
+            if (!first) {
+                out = format_to(out, ", ");
+            }
+            first = false;
+            out = format_to(out, "{}: {:.2f}", genre, rating);
+        }
+
+        out = format_to(out, "]");
+        return out;
+    }
+};
+
+template <>
+struct formatter<std::flat_map<std::string_view, std::size_t, bookdb::TransparentStringLess>, char> {
+    constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    auto format(
+        const std::flat_map<std::string_view, std::size_t, bookdb::TransparentStringLess>& map,
+        FormatContext& fc
+    ) const {
+        auto out = fc.out();
+
+        out = format_to(out, "[");
+
+        bool first = true;
+        for (const auto& [author, count] : map) {
+            if (!first) {
+                out = format_to(out, ", ");
+            }
+            first = false;
+            out = format_to(out, "{}: {}", author, count);
         }
 
         out = format_to(out, "]");

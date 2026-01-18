@@ -76,9 +76,8 @@ public:
     reference EmplaceBack(Args&&... args) {
         Book temp_book(std::forward<Args>(args)...);
         auto [it, _] = authors_.emplace(temp_book.author);
-        Book newBook = temp_book;
-        newBook.author = *it;
-        books_.push_back(std::move(newBook));
+        temp_book.author = *it;
+        books_.push_back(std::move(temp_book));
         return books_.back();
     }
 

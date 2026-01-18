@@ -46,7 +46,7 @@ int main() {
 
     // Author histogram
     auto histogram = buildAuthorHistogramFlat(db);
-    // std::print("Author histogram: {}", histogram);
+    std::print("Author histogram: {}", histogram);
 
     // Ratings
     auto genreRatings = calculateGenreRatings(db.begin(), db.end());
