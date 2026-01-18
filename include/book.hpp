@@ -1,22 +1,17 @@
 #pragma once
 
+#include <flat_map>
 #include <format>
 #include <stdexcept>
 #include <string_view>
+
+#include "heterogeneous_lookup.hpp"
 
 namespace bookdb {
 
 enum class Genre { Fiction, NonFiction, SciFi, Biography, Mystery, Unknown };
 
-// Ваш код для constexpr преобразования строк в enum::Genre и наоборот здесь
-
-constexpr Genre GenreFromString(std::string_view s) {
-    // Ваш код здесь
-    return Genre::Unknown;
-}
-
 struct Book {
-    // string_view для экономии памяти, чтобы ссылаться на оригинальную строку, хранящуюся в другом контейнере
     std::string_view author;
     std::string title;
 
@@ -26,6 +21,50 @@ struct Book {
     int read_count;
 
     // Ваш код для конструкторов здесь
+    constexpr Book(std::string_view author_,
+        std::string title_,
+        int year_,
+        Genre genre_,
+        double rating_,
+        int read_count_) : author(author_), 
+            title(std::move(title_)),
+            year(year_),
+            genre(genre_),
+            rating(rating_),
+            read_count(read_count_) {}
+
+    constexpr Book(std::string_view author_,
+            std::string title_,
+            int year_,
+            std::string_view genre_str,
+            double rating_,
+            int read_count_) : Book(author_, 
+                std::move(title_),
+                year_,
+                genre_from_string(genre_str),
+                rating_,
+                read_count_) {}
+
+    constexpr static Genre genre_from_string(std::string_view sv) {
+        using bookdb::Genre;
+        if (sv == "Fiction") {
+            return Genre::Fiction;
+        }
+        if (sv == "Mystery") {
+            return Genre::Mystery;
+        }
+        if (sv == "NonFiction") {
+            return Genre::NonFiction;
+        }
+        if (sv == "SciFi") {
+            return Genre::SciFi;
+        }
+        if (sv == "Biography") {
+            return Genre::Biography;
+        }
+        
+        return Genre::Unknown;
+    }
 };
 }  // namespace bookdb
 
@@ -53,10 +92,133 @@ struct formatter<bookdb::Genre, char> {
     }
 
     constexpr auto parse(format_parse_context &ctx) {
-        return ctx.begin();  // Просто игнорируем пользовательский формат
+        return ctx.begin();
     }
 };
 
-// Ваш код для std::formatter<Book> здесь
+template <>
+struct formatter<std::pair<bookdb::Genre, double>, char> {
+    constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    auto format(const std::pair<bookdb::Genre, double>& p,
+                FormatContext& fc) const {
+        return format_to(
+            fc.out(),
+            "{}: {:.2f}",
+            p.first,
+            p.second
+        );
+    }
+};
+
+template <>
+struct formatter<std::vector<std::pair<bookdb::Genre, double>>, char> {
+    constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    auto format(
+        const std::vector<std::pair<bookdb::Genre, double>>& vec,
+        FormatContext& fc
+    ) const {
+        auto out = fc.out();
+
+        out = format_to(out, "[");
+
+        bool first = true;
+        for (const auto& item : vec) {
+            if (!first) {
+                out = format_to(out, ", ");
+            }
+            first = false;
+            out = format_to(out, "{}", item);
+        }
+
+        out = format_to(out, "]");
+        return out;
+    }
+};
+
+template <>
+struct formatter<std::flat_map<bookdb::Genre, double>, char> {
+    constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    auto format(
+        const std::flat_map<bookdb::Genre, double>& map,
+        FormatContext& fc
+    ) const {
+        auto out = fc.out();
+
+        out = format_to(out, "[");
+
+        bool first = true;
+        for (const auto& [genre, rating] : map) {
+            if (!first) {
+                out = format_to(out, ", ");
+            }
+            first = false;
+            out = format_to(out, "{}: {:.2f}", genre, rating);
+        }
+
+        out = format_to(out, "]");
+        return out;
+    }
+};
+
+template <>
+struct formatter<std::flat_map<std::string_view, std::size_t, bookdb::TransparentStringLess>, char> {
+    constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    auto format(
+        const std::flat_map<std::string_view, std::size_t, bookdb::TransparentStringLess>& map,
+        FormatContext& fc
+    ) const {
+        auto out = fc.out();
+
+        out = format_to(out, "[");
+
+        bool first = true;
+        for (const auto& [author, count] : map) {
+            if (!first) {
+                out = format_to(out, ", ");
+            }
+            first = false;
+            out = format_to(out, "{}: {}", author, count);
+        }
+
+        out = format_to(out, "]");
+        return out;
+    }
+};
+
+template <>
+struct formatter<bookdb::Book> {
+    constexpr auto parse(format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    auto format(const bookdb::Book& book, FormatContext& ctx) const {
+        return format_to(
+            ctx.out(),
+            "{} ({}, {}, rating: {}, read: {})",
+            book.title,
+            book.author,
+            book.year,
+            book.rating,
+            book.read_count
+        );
+    }
+};
 
 }  // namespace std
